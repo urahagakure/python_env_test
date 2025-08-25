@@ -1,0 +1,12 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Daily Start (Healthcheck)",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/tools/healthcheck.py",
+      "console": "integratedTerminal"
+    }
+  ]
+}
