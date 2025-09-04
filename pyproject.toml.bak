@@ -1,0 +1,56 @@
+[project]
+name = "sample"
+version = "0.1.0"
+description = ""
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+package-mode = false        # ← ここにだけ置く！
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.1"
+ruff = "^0.12.11"
+mypy = "^1.17.1"
+pytest-cov = "^6.2.1"
+pre-commit = "^4.3.0"
+types-requests = "^2.32.4.20250809"
+[tool.mypy]
+python_version = "3.12"
+strict = false
+warn_unused_ignores = true
+warn_redundant_casts = true
+ignore_missing_imports = true
+exclude = ["^\\.venv/","^venv/","^build/","^dist/"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+# -------- Ruff --------
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]          # pycodestyle/pyflakes/ISort 相当
+ignore = ["E501"]                  # 1行長は今回ゆるめる
+extend-select = []                 # 必要なら "B" 等を追加
+
+[tool.ruff.format]
+line-ending = "lf"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]
+
+# -------- Mypy --------
+[tool.mypy]
+python_version = "3.12"
+strict = false
+warn_unused_ignores = true
+ignore_missing_imports = true

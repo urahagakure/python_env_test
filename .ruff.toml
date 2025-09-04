@@ -1,6 +1,0 @@
-# プロジェクト直下に作成
-line-length = 100
-target-version = "py312"
-extend-select = ["E","F","I","B"]   # pyflakes/pycodestyle/imports/bugbear
-ignore = ["E501"]                    # 行長はまず緩め
-exclude = [".venv","venv","dist","build",".git"]
