@@ -1,4 +1,4 @@
-# 標準ライブラリ（アルファベット順）
+# 標準ライブラリ(アルファベット順)
 import shlex
 import subprocess
 
@@ -23,10 +23,10 @@ with col3:
         st.code(out.stdout or out.stderr, language="bash")
 
 st.divider()
-st.subheader("簡易ロールバック（直前コミットへ）")
+st.subheader("簡易ロールバック(直前コミットへ)")
 st.caption("※Git 管理前提。安全のため未コミット変更がある場合は中止します。")
 
-if st.button("戻す（git reset --hard && clean）"):
+if st.button("戻す(git reset --hard && clean)"):
     # 変更が未コミットなら中止
     dirty = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True, check=False)
     if dirty.stdout.strip():

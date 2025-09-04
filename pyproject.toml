@@ -2,36 +2,33 @@
 name = "python-env-test"
 version = "0.1.0"
 description = ""
-authors = ["you <you@example.com>"]
+authors = ["you@example.com"]
 readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.12"
-streamlit = "^1.49.0"
-requests = "^2.32"
+streamlit = "1.49.1"
+watchdog = "^6.0.0"
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.6.9"
-mypy = "^1.11"
-pytest = "^8.3"
-pytest-cov = "^5.0"
-pre-commit = "^3.7"
-types-requests = "^2.32"
+ruff = "0.6.9"
+mypy = "1.10.0"
+pytest = "^8.3.2"
+pytest-cov = "^5.0.0"
+pre-commit = "^3.7.1"
+types-requests = "^2.32.0.20240801"
 
-# --- Ruff（コード整形/静的チェック）
 [tool.ruff]
 line-length = 118
 target-version = "py312"
 
 [tool.ruff.lint]
-select = ["E","F","I","UP","C90","B"]
-extend-select = ["PL","RUF100"]
-ignore = ["D"]  # docstring ルールは一旦無効
+select = ["E","F","I","UP","C90","B","SIM","PL","RUF"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101"]
+"tests/**/*" = ["S101"]
 
-# --- mypy（型チェック）
 [tool.mypy]
 python_version = "3.12"
 strict = false
