@@ -31,13 +31,12 @@ with col2:
 with col3:
     if st.button("Healthcheck"):
         r = subprocess.run(
-            shlex.split("bash tools/healthcheck.sh"),
+            shlex.split("poetry run python tools/healthcheck.py"),
             capture_output=True,
             text=True,
             check=False,
         )
         st.code(r.stdout or r.stderr, language="bash")
-
 st.divider()
 st.subheader("簡易ロールバック (直前コミットへ)")
 st.caption("※Git 管理環境。未コミットのある状態では中止します。")
