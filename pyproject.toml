@@ -33,6 +33,8 @@ ignore_missing_imports = true
 [project]
 name = "python_env_test"
 version = "0.1.0"
-description = "Uraha dev env: Streamlit + Ruff + mypy + Poetry"
+description = "Monaka-dev env: Streamlit + Ruff + mypy + Poetry"
 readme = "README.md"
 authors = [{ name = "Your Name", email = "you@example.com" }]
+# 依存と Python バージョンは tool.poetry 側を使い続ける前提で、PEP 621 側は動的扱いにして警告を抑止
+dynamic = ["dependencies", "requires-python"]
