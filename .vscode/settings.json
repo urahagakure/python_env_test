@@ -6,3 +6,7 @@
     "jake.autoDetect": "off",
     "npm.autoDetect": "off"
 }
+{
+  "editor.fontFamily": "Courier New, Consolas, monospace",
+  "terminal.integrated.fontFamily": "Courier New, Consolas, monospace"
+}
