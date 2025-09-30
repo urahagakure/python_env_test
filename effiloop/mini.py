@@ -5,6 +5,49 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 
+# ---- Presets ----
+PRESETS: dict[str, int] = {"60分": 60, "45分": 45, "25分": 25}
+_TIME_SCALE_DEFAULT: float = 60.0  # 例: 60なら「1分 = 実時間1秒」で早回し
+
+
+def list_presets() -> list[str]:
+    """UI用: 表示順でプリセット名を返す。"""
+    return list(PRESETS.keys())
+
+
+def _resolve_minutes(preset_or_minutes: int | str) -> int:
+    if isinstance(preset_or_minutes, int):
+        return preset_or_minutes
+    return PRESETS.get(preset_or_minutes, 60)
+
+
+def _simulate_loop(
+    cb: Callable[[int, str, float], None], minutes: int, *, time_scale: float = _TIME_SCALE_DEFAULT
+) -> None:
+    """EffiLoopミニの簡易シミュレーション。
+    time_scale=60 なら「分→秒」に圧縮。UIのデモ実行向け。
+    """
+    total = float(minutes * 60)
+    remain = total
+    step = 0
+    name = f"{minutes}min"
+    dt_sim = 0.1  # 0.1秒ぶんの“仮想時間”ごとに更新
+    sleep_real = dt_sim / max(0.1, time_scale)
+    while remain > 0:
+        step += 1
+        cb(step, name, remain)
+        time.sleep(sleep_real)
+        remain -= dt_sim
+    cb(step + 1, name, 0.0)
+
+
+def run_preset(
+    cb: Callable[[int, str, float], None], preset: str, *, time_scale: float = _TIME_SCALE_DEFAULT
+) -> None:
+    """プリセット名('60分' など)で走らせるAPI。"""
+    minutes = _resolve_minutes(preset)
+    _simulate_loop(cb, minutes, time_scale=time_scale)
+
 
 @dataclass
 class Step:
