@@ -11,6 +11,9 @@ import streamlit as st
 import effiloop.mini as effi
 import skills.bls_visual as bls_vis
 
+# --- constants (importの後)
+SUD_HIGH_THRESHOLD = 7
+
 
 def run_cmd(cmd: str) -> tuple[int, str]:
     """Run a shell command and return (exit_code, full_output)."""
@@ -101,22 +104,65 @@ with c2:
 with c3:
     jitter = st.slider("揺らぎ(%)", 0, 10, 0, 1)
 
+# 実時間への切替(任意)
+realtime = st.checkbox("Real-timeで回す", value=False)
+ts = 1.0 if realtime else 60.0
 sec = {"30秒": 30.0, "45秒": 45.0, "60秒": 60.0}[set_len]
 sud_pre = st.slider("SUD(不快度) 開始時", 0, 10, 3)
+
+# --- 状態 ---
+if "bls_running" not in st.session_state:
+    st.session_state.bls_running = False
+if "bls_stop" not in st.session_state:
+    st.session_state.bls_stop = False
+
+
+# --- Ground をどこからでも呼べるよう先に定義 ---
+def _ground() -> None:
+    st.toast("5つ見えるもの", icon="🟦")
+    st.toast("4つ触れるもの", icon="🟩")
+    st.toast("3つ聞こえる音", icon="🟨")
+    st.toast("2つ香り/味", icon="🟧")
+    st.toast("1つ呼吸", icon="🟥")
+
 
 bar = st.progress(0, text="準備中...")
 txt = st.empty()
 
-if st.button("Start visual BLS"):
-    cfg = bls_vis.VisualConfig(rate_hz=rate, duration_s=sec, jitter_pct=jitter, fps=40.0)
+# 列
+c_run, c_stop, c_ground = st.columns([1, 1, 1])
 
-    def _cb(i: int, pos01: float, remain: float) -> None:
-        bar.progress(int(pos01 * 100), text=f"{rate:.1f} Hz / 残り {remain:0.1f}s")
-        if i % 20 == 0:
-            txt.info(f"{i} steps")
+with c_run:
+    if st.button("Start visual BLS", disabled=st.session_state.bls_running):
+        # SUDゲート(開始前に1回だけ)
+        if sud_pre >= SUD_HIGH_THRESHOLD:
+            st.warning("SUDが高め。今日はグラウンディングだけにしましょう。")
+            _ground()
+            st.stop()
 
-    # デモは早回し(1分=1秒)。実時間で回すときは time_scale=1.0 に。
-    bls_vis.run_visual(_cb, cfg, time_scale=60.0)
-    st.success("Done ✅")
+        st.session_state.bls_running = True
+        st.session_state.bls_stop = False
+        cfg = bls_vis.VisualConfig(rate_hz=rate, duration_s=sec, jitter_pct=jitter, fps=40.0)
+
+        bar = st.progress(0, text="準備中...")  # ← 三点はASCIIに
+
+        def _cb(i: int, pos01: float, remain: float) -> None:
+            bar.progress(int(pos01 * 100), text=f"{rate:.1f} Hz / 残り {remain:0.1f}s")
+            if i % 20 == 0:
+                txt.info(f"{i} steps")
+
+        bls_vis.run_visual(_cb, cfg, time_scale=ts, stop_fn=lambda: st.session_state.bls_stop)
+        st.session_state.bls_running = False
+        st.success("Done ✅") if not st.session_state.bls_stop else st.warning("Stopped. Groundへ。")
+with c_stop:
+    st.button(
+        "Stop",
+        type="secondary",
+        disabled=not st.session_state.bls_running,
+        on_click=lambda: st.session_state.update(bls_stop=True),
+    )
+
+with c_ground:
+    st.button("Ground", on_click=_ground)
 
 sud_post = st.slider("SUD(不快度) 終了時", 0, 10, 2)
