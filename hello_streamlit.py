@@ -111,13 +111,11 @@ sec = {"30秒": 30.0, "45秒": 45.0, "60秒": 60.0}[set_len]
 sud_pre = st.slider("SUD(不快度) 開始時", 0, 10, 3)
 
 # --- 状態 ---
-if "bls_running" not in st.session_state:
-    st.session_state.bls_running = False
-if "bls_stop" not in st.session_state:
-    st.session_state.bls_stop = False
+state = st.session_state
+state.setdefault("bls_running", False)
+state.setdefault("bls_stop", False)
 
 
-# --- Ground をどこからでも呼べるよう先に定義 ---
 def _ground() -> None:
     st.toast("5つ見えるもの", icon="🟦")
     st.toast("4つ触れるもの", icon="🟩")
@@ -126,34 +124,42 @@ def _ground() -> None:
     st.toast("1つ呼吸", icon="🟥")
 
 
-bar = st.progress(0, text="準備中...")
-txt = st.empty()
+# ここは「常に表示」する(消えない)
+c_run, c_stop, c_ground = st.columns(3)
+start_clicked = c_run.button("Start visual BLS", key="bls_start", disabled=state.bls_running)
+stop_clicked = c_stop.button("Stop", key="bls_stop_btn", type="secondary", disabled=not state.bls_running)
+ground_clicked = c_ground.button("Ground", key="bls_ground_btn")
 
-# 列
-c_run, c_stop, c_ground = st.columns([1, 1, 1])
+# 先に単発イベントを処理
+if ground_clicked:
+    _ground()
+if stop_clicked:
+    state.bls_stop = True  # ループ側の stop_fn が拾う
 
-with c_run:
-    if st.button("Start visual BLS", disabled=st.session_state.bls_running):
-        # SUDゲート(開始前に1回だけ)
-        if sud_pre >= SUD_HIGH_THRESHOLD:
-            st.warning("SUDが高め。今日はグラウンディングだけにしましょう。")
-            _ground()
-            st.stop()
+# Start を押したときの本処理
+if start_clicked:
+    # SUDゲート(高すぎたら描画を止める)
+    if sud_pre >= SUD_HIGH_THRESHOLD:
+        st.warning("SUDが高め。今日はグラウンディングだけにしましょう。")
+        _ground()
+        st.stop()
 
-        st.session_state.bls_running = True
-        st.session_state.bls_stop = False
-        cfg = bls_vis.VisualConfig(rate_hz=rate, duration_s=sec, jitter_pct=jitter, fps=40.0)
+    state.bls_running = True
+    state.bls_stop = False
 
-        bar = st.progress(0, text="準備中...")  # ← 三点はASCIIに
+    cfg = bls_vis.VisualConfig(rate_hz=rate, duration_s=sec, jitter_pct=jitter, fps=40.0)
+    bar = st.progress(0, text="準備中...")  # 進捗はStartのたびに作り直す
+    txt = st.empty()
 
-        def _cb(i: int, pos01: float, remain: float) -> None:
-            bar.progress(int(pos01 * 100), text=f"{rate:.1f} Hz / 残り {remain:0.1f}s")
-            if i % 20 == 0:
-                txt.info(f"{i} steps")
+    def _cb(i: int, pos01: float, remain: float) -> None:
+        bar.progress(int(pos01 * 100), text=f"{rate:.1f} Hz / 残り {remain:0.1f}s")
+        if i % 20 == 0:
+            txt.info(f"{i} steps")
 
-        bls_vis.run_visual(_cb, cfg, time_scale=ts, stop_fn=lambda: st.session_state.bls_stop)
-        st.session_state.bls_running = False
-        st.success("Done ✅") if not st.session_state.bls_stop else st.warning("Stopped. Groundへ。")
+    bls_vis.run_visual(_cb, cfg, time_scale=ts, stop_fn=lambda: state.bls_stop)
+
+    state.bls_running = False
+    st.warning("Stopped. Groundへ。") if state.bls_stop else st.success("Done ✅")
 with c_stop:
     st.button(
         "Stop",
