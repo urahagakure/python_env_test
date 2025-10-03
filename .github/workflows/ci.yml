@@ -1,0 +1,37 @@
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# 同じブランチへの連続pushは古いジョブをキャンセル
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ruff:
+    name: ruff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - run: pipx install poetry
+      - run: poetry install --no-root --no-interaction
+      - run: poetry run ruff check .
+
+  mypy:
+    name: mypy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - run: pipx install poetry
+      - run: poetry install --no-root --no-interaction
+      - run: poetry run mypy .
