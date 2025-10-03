@@ -124,21 +124,29 @@ def _ground() -> None:
     st.toast("1つ呼吸", icon="🟥")
 
 
-# ここは「常に表示」する(消えない)
+# 1段だけ常に描画(もう1段が残っていたら削除)
 c_run, c_stop, c_ground = st.columns(3)
 start_clicked = c_run.button("Start visual BLS", key="bls_start", disabled=state.bls_running)
-stop_clicked = c_stop.button("Stop", key="bls_stop_btn", type="secondary", disabled=not state.bls_running)
+
+# ★ここが修正点:Start直後でもStopを有効化
+running_now = state.bls_running or start_clicked
+stop_clicked = c_stop.button("Stop", key="bls_stop_btn", type="secondary", disabled=not running_now)
 ground_clicked = c_ground.button("Ground", key="bls_ground_btn")
 
-# 先に単発イベントを処理
+# 単発イベント
 if ground_clicked:
     _ground()
-if stop_clicked:
-    state.bls_stop = True  # ループ側の stop_fn が拾う
 
-# Start を押したときの本処理
+if stop_clicked:
+    state.bls_stop = True
+    state.bls_running = False  # add: Startをすぐ再び押せるようにする
+
+    # 直ちに再実行してボタン状態を反映(mypy互換も考慮)
+    _rerun = getattr(st, "rerun", None) or getattr(st, "experimental_rerun", None)
+    if callable(_rerun):
+        _rerun()
+# Startが押されたとき
 if start_clicked:
-    # SUDゲート(高すぎたら描画を止める)
     if sud_pre >= SUD_HIGH_THRESHOLD:
         st.warning("SUDが高め。今日はグラウンディングだけにしましょう。")
         _ground()
@@ -148,7 +156,7 @@ if start_clicked:
     state.bls_stop = False
 
     cfg = bls_vis.VisualConfig(rate_hz=rate, duration_s=sec, jitter_pct=jitter, fps=40.0)
-    bar = st.progress(0, text="準備中...")  # 進捗はStartのたびに作り直す
+    bar = st.progress(0, text="準備中...")
     txt = st.empty()
 
     def _cb(i: int, pos01: float, remain: float) -> None:
@@ -160,15 +168,6 @@ if start_clicked:
 
     state.bls_running = False
     st.warning("Stopped. Groundへ。") if state.bls_stop else st.success("Done ✅")
-with c_stop:
-    st.button(
-        "Stop",
-        type="secondary",
-        disabled=not st.session_state.bls_running,
-        on_click=lambda: st.session_state.update(bls_stop=True),
-    )
 
-with c_ground:
-    st.button("Ground", on_click=_ground)
 
 sud_post = st.slider("SUD(不快度) 終了時", 0, 10, 2)
